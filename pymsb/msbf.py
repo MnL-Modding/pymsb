@@ -3,8 +3,18 @@ from .adapter import LMSAdapter
 from .helper import LMSException
 from . import helper
 
-__all__ = ["LMSFlowNode", "LMSEntryNode", "LMSMessageNode", "LMSBranchNode", "LMSEventNode", "LMSFlows",
-           "msbf_from_buffer", "msbf_pack_buffer", "msbf_from_file", "msbf_write_file"]
+__all__ = [
+    "LMSFlowNode",
+    "LMSEntryNode",
+    "LMSMessageNode",
+    "LMSBranchNode",
+    "LMSEventNode",
+    "LMSFlows",
+    "msbf_from_buffer",
+    "msbf_pack_buffer",
+    "msbf_from_file",
+    "msbf_write_file",
+]
 
 
 class LMSFlowNode:
@@ -128,10 +138,11 @@ class LMSFlows:
     A document that can hold flowcharts and their nodes (i.e. LMSFlowNode). It provides the general blueprints for MSBF
     files, however, only specific games support MSBF files. Check the LMSAdapter interface for more information.
     """
+
     _MAGIC_HEADER_ = b"MsgFlwBn"
-    _MAGIC_FLW2_ = b'FLW2'
-    _MAGIC_FEN1_ = b'FEN1'
-    _MAGIC_REF1_ = b'REF1'
+    _MAGIC_FLW2_ = b"FLW2"
+    _MAGIC_FEN1_ = b"FEN1"
+    _MAGIC_REF1_ = b"REF1"
 
     def __init__(self, adapter_maker: type[LMSAdapter]):
         if not adapter_maker.supports_flows:
@@ -189,7 +200,9 @@ class LMSFlows:
         # Check if flowchart with label already exists
         for flowchart in self._flowcharts_:
             if flowchart.label == label:
-                raise LMSException(f"A flowchart with the label {label} already exists!")
+                raise LMSException(
+                    f"A flowchart with the label {label} already exists!"
+                )
 
         # Create and append new flowchart
         flowchart = LMSEntryNode()
@@ -455,7 +468,9 @@ class LMSFlows:
 
         # Create stream and write hash table
         stream = self._adapter_.create_stream(0x04 + num_buckets * 0x08)
-        indices_and_labels = [(self._temp_nodes_.index(f), f.label) for f in self._flowcharts_]
+        indices_and_labels = [
+            (self._temp_nodes_.index(f), f.label) for f in self._flowcharts_
+        ]
         helper.pack_hash_table(stream, indices_and_labels, num_buckets)
 
         # Write section to main stream

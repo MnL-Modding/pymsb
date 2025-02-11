@@ -3,6 +3,7 @@ from .binIO import BinaryMemoryIO
 
 class LMSException(Exception):
     """Signals that some exception occurred while dealing with MSBT/MSBF data."""
+
     pass
 
 
@@ -53,11 +54,11 @@ def find_greater_prime(val: int) -> int:
     """
     # Standard cases
     if val < 5:
-        if val < 2:   # Only even prime number
+        if val < 2:  # Only even prime number
             return 2
         if val == 2:  # Needed due to "val % 3" below
             return 3
-        return 5      # Needed due to "val % 5" below
+        return 5  # Needed due to "val % 5" below
 
     # Start at next odd number
     val = val + 2 if val & 1 else val + 1
@@ -127,7 +128,9 @@ def unpack_hash_table(stream: BinaryMemoryIO) -> dict[int, str]:
     return label_indices
 
 
-def pack_hash_table(stream: BinaryMemoryIO, labels: list[tuple[int, str]], num_buckets: int):
+def pack_hash_table(
+    stream: BinaryMemoryIO, labels: list[tuple[int, str]], num_buckets: int
+):
     """
     Packs a hash table storing the given index-label pairs and writes the resulting blob to the given stream.
 

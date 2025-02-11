@@ -12,11 +12,14 @@ class LMSAdapter(ABC):
     attributes, and more. In other words, an adapter controls can control how the library will deal with MSBT and MSBF
     files.
     """
+
     def __init__(self):
         self._charset_: str = "utf-16-be"
         self._is_big_endian_: bool = True
         self._read_char_func_: Callable[[BinaryMemoryIO], str] = __read_utf_16_be_char__
-        self._write_char_func_: Callable[[BinaryMemoryIO, str], int] = __write_utf_16_be__
+        self._write_char_func_: Callable[[BinaryMemoryIO, str], int] = (
+            __write_utf_16_be__
+        )
 
     def create_stream(self, initial_capacity: int = 0) -> BinaryMemoryIO:
         """
@@ -26,7 +29,9 @@ class LMSAdapter(ABC):
         :param initial_capacity: the initial capacity.
         :return: the newly constructed stream.
         """
-        stream = BinaryMemoryIO(bytes(initial_capacity), big_endian=self._is_big_endian_)
+        stream = BinaryMemoryIO(
+            bytes(initial_capacity), big_endian=self._is_big_endian_
+        )
         stream.seek(0)
         return stream
 
@@ -143,7 +148,7 @@ class LMSAdapter(ABC):
             elif ch == "\u000E":
                 text += self.read_tag(stream)
             elif ch == "[":
-                text += '\\['
+                text += "\\["
             elif ch == "]":
                 text += "\\]"
             elif ch == "\\":
@@ -236,7 +241,9 @@ class LMSAdapter(ABC):
         """
         raise NotImplementedError()
 
-    def parse_attributes(self, stream: BinaryMemoryIO, root_offset: int, root_size: int) -> dict[str, Any]:
+    def parse_attributes(
+        self, stream: BinaryMemoryIO, root_offset: int, root_size: int
+    ) -> dict[str, Any]:
         """
         Reads and parses message attributes from the given stream.
 

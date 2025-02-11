@@ -7,11 +7,13 @@ __all__ = ["BinaryMemoryIO", "EOFException", "BOMException"]
 
 class EOFException(Exception):
     """Signals an attempt at reading beyond a stream."""
+
     pass
 
 
 class BOMException(Exception):
     """Signals that some value is not a proper BOM."""
+
     pass
 
 
@@ -20,6 +22,7 @@ class BinaryMemoryIO(io.BytesIO):
     A buffered I/O implementation using an in-memory bytes buffer to store data. Provides methods to read or write
     primitive data.
     """
+
     __STR_BOOL__ = struct.Struct("?")
     __STR_U8__ = struct.Struct("B")
     __STR_S8__ = struct.Struct("b")
@@ -77,10 +80,14 @@ class BinaryMemoryIO(io.BytesIO):
 
     # ------------------------------------------------------------------------------------------------------------------
 
-    def __get_struct__(self, big_endian_struct: struct.Struct, little_endian_struct: struct.Struct):
+    def __get_struct__(
+        self, big_endian_struct: struct.Struct, little_endian_struct: struct.Struct
+    ):
         return big_endian_struct if self.__big_endian__ else little_endian_struct
 
-    def __read_primitive__(self, big_endian_struct: struct.Struct, little_endian_struct: struct.Struct):
+    def __read_primitive__(
+        self, big_endian_struct: struct.Struct, little_endian_struct: struct.Struct
+    ):
         strct = self.__get_struct__(big_endian_struct, little_endian_struct)
         raw = self.read(strct.size)
 
@@ -89,7 +96,9 @@ class BinaryMemoryIO(io.BytesIO):
         else:
             raise EOFException
 
-    def __write_primitive__(self, val, big_endian_struct: struct.Struct, little_endian_struct: struct.Struct):
+    def __write_primitive__(
+        self, val, big_endian_struct: struct.Struct, little_endian_struct: struct.Struct
+    ):
         strct = self.__get_struct__(big_endian_struct, little_endian_struct)
         raw = strct.pack(val)
         self.write(raw)

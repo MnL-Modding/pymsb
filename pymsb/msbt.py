@@ -4,7 +4,14 @@ from .adapter import LMSAdapter
 from .helper import LMSException
 from . import helper
 
-__all__ = ["LMSMessage", "LMSDocument", "msbt_from_buffer", "msbt_pack_buffer", "msbt_from_file", "msbt_write_file"]
+__all__ = [
+    "LMSMessage",
+    "LMSDocument",
+    "msbt_from_buffer",
+    "msbt_pack_buffer",
+    "msbt_from_file",
+    "msbt_write_file",
+]
 
 
 class LMSMessage:
@@ -12,6 +19,7 @@ class LMSMessage:
     Represents an individual message entry that belongs to an LMSDocument. It always has a label and text, but some
     games support additional attributes and a style value.
     """
+
     def __init__(self, text: str):
         self.label = ""
         self.text = text
@@ -25,12 +33,13 @@ class LMSDocument:
     however, game-dependent features need to be handled by custom adapter classes. See LMSAdapter for detailed for more
     information.
     """
+
     _MAGIC_HEADER_ = b"MsgStdBn"
-    _MAGIC_LBL1_ = b'LBL1'
-    _MAGIC_TXT2_ = b'TXT2'
-    _MAGIC_ATR1_ = b'ATR1'
-    _MAGIC_ATO1_ = b'ATO1'
-    _MAGIC_TSY1_ = b'TSY1'
+    _MAGIC_LBL1_ = b"LBL1"
+    _MAGIC_TXT2_ = b"TXT2"
+    _MAGIC_ATR1_ = b"ATR1"
+    _MAGIC_ATO1_ = b"ATO1"
+    _MAGIC_TSY1_ = b"TSY1"
 
     def __init__(self, adapter_maker: type[LMSAdapter]):
         self._messages_: list[LMSMessage] = []
@@ -153,7 +162,9 @@ class LMSDocument:
         else:
             self._adapter_.set_little_endian()
 
-        self._adapter_.charset = helper.encoding_to_charset(encoding, stream.is_big_endian)
+        self._adapter_.charset = helper.encoding_to_charset(
+            encoding, stream.is_big_endian
+        )
 
         # Parse all sections
         current_section_offset = 32
@@ -243,7 +254,9 @@ class LMSDocument:
 
     def _unpack_atr1_(self, stream: BinaryMemoryIO, offset: int, size: int):
         if not self._adapter_.supports_attributes:
-            raise LMSException("Adapter does not support message attributes, cannot parse ATR1 section")
+            raise LMSException(
+                "Adapter does not support message attributes, cannot parse ATR1 section"
+            )
 
         stream.seek(offset)
         num_entries = stream.read_s32()
@@ -263,7 +276,9 @@ class LMSDocument:
 
     def _unpack_tsy1_(self, stream: BinaryMemoryIO, offset: int, size: int):
         if not self._adapter_.supports_styles:
-            raise LMSException("Adapter does not support styles, cannot parse TSY1 section")
+            raise LMSException(
+                "Adapter does not support styles, cannot parse TSY1 section"
+            )
 
         stream.seek(offset)
         num_entries = size // 4
@@ -431,7 +446,9 @@ class LMSDocument:
 # ----------------------------------------------------------------------------------------------------------------------
 # Helper I/O functions
 # ----------------------------------------------------------------------------------------------------------------------
-def msbt_from_buffer(adapter_maker: type[LMSAdapter], buffer: bytes | bytearray) -> LMSDocument:
+def msbt_from_buffer(
+    adapter_maker: type[LMSAdapter], buffer: bytes | bytearray
+) -> LMSDocument:
     """
     Creates and returns a new LMS document by unpacking the content from the specified buffer. The data is expected to
     be in the MSBT format.

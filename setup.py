@@ -19,6 +19,6 @@ setuptools.setup(
         "Intended Audience :: Developers",
         "Topic :: Software Development :: Libraries",
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
-        "Programming Language :: Python :: 3 :: Only"
-    ]
+        "Programming Language :: Python :: 3 :: Only",
+    ],
 )

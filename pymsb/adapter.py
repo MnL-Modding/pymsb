@@ -1,4 +1,4 @@
-from .helper import LMSException
+from .helper import LMSException, SectionName
 from .binIO import BinaryMemoryIO
 from typing import Callable, Any
 from abc import ABC
@@ -97,6 +97,20 @@ class LMSAdapter(ABC):
     # General MSBT/MSBF properties
     # ------------------------------------------------------------------------------------------------------------------
     @property
+    def section_order(self) -> list[SectionName]:
+        """The order the sections should be packed in."""
+        return ["LBL1", "ATR1", "TXT2", "TSY1"]
+
+    def padding_byte(self, section_name: SectionName) -> int | None:
+        """The byte to use as padding to align the section to 16 bytes, or None to skip aligning."""
+        return 0xAB
+
+    @property
+    def header_padding(self) -> bytes:
+        """The padding to use to align the file header. Should be 10 bytes long."""
+        return b"\x00" * 10
+
+    @property
     def use_fixed_buckets(self) -> bool:
         """True if MSBT or MSBF files should use a fixed number of hash buckets, otherwise False."""
         return False
@@ -147,6 +161,8 @@ class LMSAdapter(ABC):
                 break
             elif ch == "\u000E":
                 text += self.read_tag(stream)
+            elif ch == "\u000F":
+                text += self.read_closing_tag(stream)
             elif ch == "[":
                 text += "\\["
             elif ch == "]":
@@ -161,8 +177,19 @@ class LMSAdapter(ABC):
     def read_tag(self, stream: BinaryMemoryIO) -> str:
         """
         Parses from the given stream a special tag and returns a string representation of it. The string representation
-        should be enclosed between square brackets ('[', ']'). Tags always start out with the same three unsigned shorts
+        should be enclosed between square brackets ('[', ']'). Tags always start out with the same three unsigned short
         values, group ID, tag ID and data size. Following these values, the tag's data follows.
+
+        :param stream: the stream to read from.
+        :return: the parsed tag.
+        """
+        raise NotImplementedError()
+
+    def read_closing_tag(self, stream: BinaryMemoryIO) -> str:
+        """
+        Parses from the given stream a closing special tag and returns a string representation of it.
+        See ``read_tag`` for more information. Closing tags always have the same two unsigned short values,
+        group ID and tag ID.
 
         :param stream: the stream to read from.
         :return: the parsed tag.
@@ -219,6 +246,14 @@ class LMSAdapter(ABC):
         :param tag: the tag to be written.
         """
         raise NotImplementedError()
+
+    # ------------------------------------------------------------------------------------------------------------------
+    # Labels interface
+    # ------------------------------------------------------------------------------------------------------------------
+    @property
+    def supports_labels(self) -> bool:
+        """True if the adapter supports message labels (i.e. LBL1 section), otherwise False."""
+        return True
 
     # ------------------------------------------------------------------------------------------------------------------
     # Attributes interface

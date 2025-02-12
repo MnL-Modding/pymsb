@@ -16,15 +16,15 @@ __all__ = [
 
 class LMSMessage:
     """
-    Represents an individual message entry that belongs to an LMSDocument. It always has a label and text, but some
-    games support additional attributes and a style value.
+    Represents an individual message entry that belongs to an LMSDocument. It always has text, but some
+    games support additional labels, attributes and a style value.
     """
 
     def __init__(self, text: str):
-        self.label = ""
-        self.text = text
-        self.attributes = {}
-        self.style = -1
+        self.label: str | None = None
+        self.text: str = text
+        self.attributes: dict[str, Any] = {}
+        self.style: int = -1
 
 
 class LMSDocument:
@@ -45,7 +45,7 @@ class LMSDocument:
         self._messages_: list[LMSMessage] = []
         self._adapter_: LMSAdapter = adapter_maker()
 
-        self._temp_labels_: dict[int, str]
+        self._temp_labels_: dict[int, str | None]
         self._temp_attrs_: list[dict[str, Any]]
         self._temp_styles_: list[int]
 
@@ -95,7 +95,7 @@ class LMSDocument:
         """True if little endian byte order should be used, otherwise False."""
         return self._adapter_.is_little_endian
 
-    def new_message(self, label: str) -> LMSMessage:
+    def new_message(self, label: str | None = None) -> LMSMessage:
         """
         Creates and returns a new message entry using the given label and adds it to the list of messages. If an entry
         with the same label already exists, an LMSException will be thrown.
@@ -104,9 +104,12 @@ class LMSDocument:
         :return: the new message entry.
         """
         # Check if message with label already exists
-        for message in self._messages_:
-            if message.label == label:
-                raise LMSException(f"A message with the label {label} already exists!")
+        if label is not None:
+            for message in self._messages_:
+                if message.label == label:
+                    raise LMSException(
+                        f"A message with the label {label} already exists!"
+                    )
 
         # Create and append new message
         message = LMSMessage("")
@@ -195,10 +198,11 @@ class LMSDocument:
             stream.seek(current_section_offset)
 
         # Verify contents
+        has_labels = self._adapter_.supports_labels
         has_attributes = self._adapter_.supports_attributes
         has_styles = self._adapter_.supports_styles
 
-        if self._temp_labels_ is None:
+        if has_labels and self._temp_labels_ is None:
             raise LMSException("No labels section found")
 
         if has_attributes and self._temp_attrs_ is None:
@@ -209,7 +213,7 @@ class LMSDocument:
 
         # Join messages, labels, attributes & styles
         for i, message in enumerate(self._messages_):
-            if self._temp_labels_:
+            if has_labels and self._temp_labels_:
                 if i in self._temp_labels_:
                     message.label = self._temp_labels_[i]
                 else:
@@ -228,7 +232,8 @@ class LMSDocument:
                     message.style = self._adapter_.create_default_style()
 
         # Cleanup
-        del self._temp_labels_
+        if has_labels:
+            del self._temp_labels_
 
         if has_attributes:
             del self._temp_attrs_
@@ -310,24 +315,34 @@ class LMSDocument:
         stream.write_u16(0)
         stream.skip(2)
         stream.write_u32(0)
-        stream.skip(10)
+        stream.write(self._adapter_.header_padding)
 
         # Pack the sections
         num_sections = 0
 
-        self._pack_lbl1_(stream)
-        num_sections += 1
+        for section in self._adapter_.section_order:
+            match section:
+                case "LBL1":
+                    if self._adapter_.supports_labels:
+                        self._pack_lbl1_(stream)
+                        num_sections += 1
 
-        if self._adapter_.supports_attributes:
-            self._pack_atr1_(stream)
-            num_sections += 1
+                case "ATR1":
+                    if self._adapter_.supports_attributes:
+                        self._pack_atr1_(stream)
+                        num_sections += 1
 
-        self._pack_txt2_(stream)
-        num_sections += 1
+                case "TXT2":
+                    self._pack_txt2_(stream)
+                    num_sections += 1
 
-        if self._adapter_.supports_styles:
-            self._pack_tsy1_(stream)
-            num_sections += 1
+                case "TSY1":
+                    if self._adapter_.supports_styles:
+                        self._pack_tsy1_(stream)
+                        num_sections += 1
+
+                case _:
+                    raise LMSException(f"Unknown section: {section}")
 
         # Update header and get result
         stream.seek(0x000E)
@@ -356,8 +371,10 @@ class LMSDocument:
         main_stream.skip(8)
         main_stream.write(stream.getbuffer().tobytes())
 
-        while main_stream.size & 15:
-            main_stream.write_u8(0xAB)
+        padding_byte = self._adapter_.padding_byte("LBL1")
+        if padding_byte is not None:
+            while main_stream.size & 15:
+                main_stream.write_u8(padding_byte)
 
         del stream
 
@@ -383,8 +400,10 @@ class LMSDocument:
         main_stream.skip(8)
         main_stream.write(stream.getbuffer().tobytes())
 
-        while main_stream.size & 15:
-            main_stream.write_u8(0xAB)
+        padding_byte = self._adapter_.padding_byte("TXT2")
+        if padding_byte is not None:
+            while main_stream.size & 15:
+                main_stream.write_u8(padding_byte)
 
         del stream
 
@@ -412,8 +431,10 @@ class LMSDocument:
         main_stream.skip(8)
         main_stream.write(stream.getbuffer().tobytes())
 
-        while main_stream.size & 15:
-            main_stream.write_u8(0xAB)
+        padding_byte = self._adapter_.padding_byte("ATR1")
+        if padding_byte is not None:
+            while main_stream.size & 15:
+                main_stream.write_u8(padding_byte)
 
         del stream
 
@@ -437,8 +458,10 @@ class LMSDocument:
         main_stream.skip(8)
         main_stream.write(stream.getbuffer().tobytes())
 
-        while main_stream.size & 15:
-            main_stream.write_u8(0xAB)
+        padding_byte = self._adapter_.padding_byte("TSY1")
+        if padding_byte is not None:
+            while main_stream.size & 15:
+                main_stream.write_u8(padding_byte)
 
         del stream
 

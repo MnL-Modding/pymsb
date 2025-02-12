@@ -5,4 +5,4 @@ from .adapter import *
 from .binIO import *
 from .msbt import *
 from .msbf import *
-from .helper import LMSException
+from .helper import LMSException as LMSException, SectionName as SectionName

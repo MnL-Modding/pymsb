@@ -1,4 +1,9 @@
+from typing import Literal, TypeAlias
+
 from .binIO import BinaryMemoryIO
+
+
+SectionName: TypeAlias = Literal["LBL1", "TXT2", "ATR1", "ATO1", "TSY1"]
 
 
 class LMSException(Exception):

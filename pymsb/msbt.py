@@ -1,4 +1,6 @@
-from typing import Any
+from collections.abc import Callable
+from typing import Any, override
+
 from .binIO import *
 from .adapter import LMSAdapter
 from .helper import LMSException
@@ -26,6 +28,12 @@ class LMSMessage:
         self.attributes: dict[str, Any] = {}
         self.style: int = -1
 
+    @override
+    def __eq__(self, other: object, /) -> bool:
+        if isinstance(other, self.__class__):
+            return self.__dict__ == other.__dict__
+        return NotImplemented
+
 
 class LMSDocument:
     """
@@ -41,13 +49,19 @@ class LMSDocument:
     _MAGIC_ATO1_ = b"ATO1"
     _MAGIC_TSY1_ = b"TSY1"
 
-    def __init__(self, adapter_maker: type[LMSAdapter]):
+    def __init__(self, adapter_maker: Callable[[], LMSAdapter]):
         self._messages_: list[LMSMessage] = []
         self._adapter_: LMSAdapter = adapter_maker()
 
         self._temp_labels_: dict[int, str | None]
         self._temp_attrs_: list[dict[str, Any]]
         self._temp_styles_: list[int]
+
+    @override
+    def __eq__(self, other: object, /) -> bool:
+        if isinstance(other, self.__class__):
+            return self.__dict__ == other.__dict__
+        return NotImplemented
 
     @property
     def messages(self) -> list[LMSMessage]:
@@ -470,7 +484,7 @@ class LMSDocument:
 # Helper I/O functions
 # ----------------------------------------------------------------------------------------------------------------------
 def msbt_from_buffer(
-    adapter_maker: type[LMSAdapter], buffer: bytes | bytearray
+    adapter_maker: Callable[[], LMSAdapter], buffer: bytes | bytearray
 ) -> LMSDocument:
     """
     Creates and returns a new LMS document by unpacking the content from the specified buffer. The data is expected to
@@ -495,7 +509,9 @@ def msbt_pack_buffer(document: LMSDocument) -> bytes:
     return document.makebin()
 
 
-def msbt_from_file(adapter_maker: type[LMSAdapter], file_path: str) -> LMSDocument:
+def msbt_from_file(
+    adapter_maker: Callable[[], LMSAdapter], file_path: str
+) -> LMSDocument:
     """
     Creates and returns a new LMS document by unpacking the contents from the file at the given path. The data is
     expected to be in the MSBT format.

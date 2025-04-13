@@ -1,0 +1,23 @@
+[project]
+name = "pymsbmnl"
+version = "1.1.0"
+description = "Python library for Nintendo's MSBT & MSBF formats (Mario & Luigi Modding fork)."
+authors = [
+    {name = "Aurum"},
+    {name = "Dimitar Dimitrov",email = "dmtrdmtrov@gmail.com"}
+]
+license = {text = "Apache-2.0"}
+keywords = ["nintendo", "lms", "msbt", "msbf", "modding"]
+readme = "README.md"
+requires-python = ">=3.10,<4.0"
+dependencies = [
+]
+
+[project.urls]
+repository = "https://github.com/MnL-Modding/pymsbmnl"
+
+[tool.poetry]
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
